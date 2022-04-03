@@ -3,6 +3,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { Readable } from 'stream';
 import Stripe from 'stripe';
 import { stripe } from '../../services/stripe';
+import { saveSubscription } from './_lib/manageSubscription';
 
 // create strings of the stream and convert to a buffer
 // this is to be more readable in the code
@@ -51,14 +52,19 @@ export default async(req: NextApiRequest, res: NextApiResponse)=>{
       try {
         switch (type) {
         case 'checkout.session.completed':
+          const checkoutSession = event.data.object as Stripe.Checkout.Session;
+
+          await saveSubscription(
+              checkoutSession.subscription.toString(), 
+              checkoutSession.customer.toString()
+            );
           break;
 
         default:
           throw new Error('Unhandled event type');
       }
-      } catch (error) {
-        console.error(error);
-        return res.status(500).send('Webhook Error');
+      } catch (err) {
+        return res.json({error:'Webhook Error'});
       }
     }
 
