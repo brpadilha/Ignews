@@ -12,7 +12,7 @@ console.log(session)
       onClick={()=>signOut()}
     >
       <FaGithub color="#84d361" />
-      SignOut in with Github
+      {session.user.name}
       <FiX color="#737380" className={styles.closeIcon} />
     </button>
   ) : (
