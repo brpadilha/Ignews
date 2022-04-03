@@ -25,16 +25,37 @@ export default NextAuth({
       try {
         //doing query to import user on faunaDB
         await fauna.query(
-          // query to create a new user
-          query.Create(
-            // Collection users that we will insert our user
-            query.Collection("users"),
-            { data: { email } }
-          )
-        );
+          // verify if already exists a user with this email
+          // its bether than create const and make a query if userExists
+          
+          query.If(
+            query.Not(
+              query.Exists(
+                query.Match(
+                  query.Index("user_by_email"),
+                  query.Casefold(email)
+                )
+              )
+            ),
+            // query to create a new user
+            query.Create(
+              // Collection users that we will insert our user
+              query.Collection("users"),
+              { data: { email } }
+            ),
+            // if user exists, will get the data from this user
+            query.Get(
+              query.Match(
+                query.Index("user_by_email"),
+                query.Casefold(email)
+              )
+            )
+          ),
+        )
 
         return true;
-      } catch {
+      } catch(error) {
+        console.error(error);
         return false;
       }
     },
