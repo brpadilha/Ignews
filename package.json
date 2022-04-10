@@ -10,7 +10,7 @@
     "slicemachine": "start-slicemachine"
   },
   "dependencies": {
-    "@prismicio/client": "^6.4.2",
+    "@prismicio/client": "5.1.1",
     "@prismicio/helpers": "^2.2.1",
     "@prismicio/react": "^2.2.0",
     "@prismicio/slice-simulator-react": "^0.2.1",
