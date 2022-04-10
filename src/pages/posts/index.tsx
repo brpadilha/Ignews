@@ -5,8 +5,20 @@ import styles from './styles.module.scss'
 import { getPrismicClient } from '../../services/prismic';
 import { query } from 'faunadb';
 import  Prismic from '@prismicio/client';
+import { RichText } from 'prismic-dom';
 
-export default function Posts() {
+type Post = {
+  slug: string;
+  title: string;
+  except: string;
+  updatedAt: string;
+}
+
+interface PopstProps {
+  posts: Post[];
+}
+
+export default function Posts({ posts }: PopstProps) {
   return (
     <>
       <Head>
@@ -14,38 +26,16 @@ export default function Posts() {
       </Head>
       <main className={styles.container}>
         <div className={styles.posts}>
-          <a>
-            <time>12 de março de 2021</time>
-            <strong>Creating a Monorepo with Learn Yarn Workspaces</strong>
-            <p>
-              In this guide, you will learn how to create a Monorepo to manage
-              multiple packages with a shared build, test, and release process.
-            </p>
-          </a>
-          <a>
-            <time>12 de março de 2021</time>
-            <strong>Creating a Monorepo with Learn Yarn Workspaces</strong>
-            <p>
-              In this guide, you will learn how to create a Monorepo to manage
-              multiple packages with a shared build, test, and release process.
-            </p>
-          </a>
-          <a>
-            <time>12 de março de 2021</time>
-            <strong>Creating a Monorepo with Learn Yarn Workspaces</strong>
-            <p>
-              In this guide, you will learn how to create a Monorepo to manage
-              multiple packages with a shared build, test, and release process.
-            </p>
-          </a>
-          <a>
-            <time>12 de março de 2021</time>
-            <strong>Creating a Monorepo with Learn Yarn Workspaces</strong>
-            <p>
-              In this guide, you will learn how to create a Monorepo to manage
-              multiple packages with a shared build, test, and release process.
-            </p>
-          </a>
+          {posts.map(post => (
+            <a key={post.slug}>
+              <time>{post.updatedAt}</time>
+              <strong>{post.title}</strong>
+              <p>
+                {post.except}
+              </p>
+            </a>
+          )) }
+          
         </div>
       </main>
     </>
@@ -55,13 +45,30 @@ export default function Posts() {
 export const getStaticProps: GetStaticProps = async () => {
   const prismic = getPrismicClient()
 
-  const response = await prismic.query([Prismic.predicates.at('document.type', 'post')],{
-    fetch: ['publication.title', 'publication.content'],
-    pageSize: 100,
+  const response = await prismic.query(
+    [Prismic.predicates.at("document.type", "post")],
+    {
+      fetch: ["publication.title", "publication.content"],
+      pageSize: 100,
+    }
+  );   
+   console.log(JSON.stringify(response, null, 2))
+
+  const posts = response.results.map(post=> {
+    return {
+      slug: post.uid,
+      title: RichText.asText(post.data.Title),
+      except: post.data.Content.find(content => content.type === 'paragraph').text,
+      updatedAt: new Date(post.last_publication_date).toLocaleDateString('pt-BR',{
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      }),
+    }
   })
 
   return {
-    props: {}
-  }
+    props: {posts},
+  };
 
 }

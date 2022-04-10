@@ -1,13 +1,13 @@
 {
   "_cts": {
     "post": {
-      "Title": {
+      "title": {
         "config": {
           "patternType": "PARAGRAPH",
           "blocks": 1
         }
       },
-      "Content": {
+      "content": {
         "config": {
           "patternType": "PARAGRAPH",
           "blocks": 1
