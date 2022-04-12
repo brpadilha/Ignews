@@ -40,9 +40,18 @@ export const getServerSideProps: GetServerSideProps = async ({ req, params }) =>
   // know if the user is logged in to see the entire post
   const session = await getSession({req})
   const { slug } = params;
-  // if(!session){}
 
-  // get client from prismic
+  if(!session.activeSubscription){
+    
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false,
+      }
+    }
+  }
+
+// get client from prismic
   const prismic = getPrismicClient(req)
     
   const response = await prismic.getByUID('post', String(slug), {})

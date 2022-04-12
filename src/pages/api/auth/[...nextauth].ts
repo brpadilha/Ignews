@@ -1,6 +1,5 @@
 import { query } from "faunadb";
 import NextAuth from "next-auth";
-import { JWT } from "next-auth/jwt";
 import GithubProvider from "next-auth/providers/github";
 import { fauna } from "../../../services/fauna";
 
@@ -20,6 +19,39 @@ export default NextAuth({
     }),
   ],
   callbacks: {
+    //change data from session, to add more or remove
+    // we will use to know if user already has subscription
+    async session({session}) {
+      try {
+        const userActiveSubscription = await fauna.query(
+          query.Get(
+            query.Intersection([
+              query.Match(
+                query.Index("subscription_by_user_ref"),
+                query.Select(
+                  "ref",
+                  query.Get(
+                    query.Match(
+                      query.Index("user_by_email"),
+                      query.Casefold(session.user.email)
+                    )
+                  )
+                )
+              ),
+
+              query.Match(query.Index("subscription_by_status"), "active"),
+            ])
+          )
+        );
+
+
+        return { ...session, activeSubscription: userActiveSubscription,};
+      } catch(error) {
+        console.log(error)
+        return { ...session, activeSubscription: null, };
+        
+      }
+    },
     async signIn({ user, account, profile }) {
       const { email } = user;
       try {
@@ -27,14 +59,11 @@ export default NextAuth({
         await fauna.query(
           // verify if already exists a user with this email
           // its bether than create const and make a query if userExists
-          
+
           query.If(
             query.Not(
               query.Exists(
-                query.Match(
-                  query.Index("user_by_email"),
-                  query.Casefold(email)
-                )
+                query.Match(query.Index("user_by_email"), query.Casefold(email))
               )
             ),
             // query to create a new user
@@ -45,16 +74,13 @@ export default NextAuth({
             ),
             // if user exists, will get the data from this user
             query.Get(
-              query.Match(
-                query.Index("user_by_email"),
-                query.Casefold(email)
-              )
+              query.Match(query.Index("user_by_email"), query.Casefold(email))
             )
-          ),
-        )
+          )
+        );
 
         return true;
-      } catch(error) {
+      } catch (error) {
         console.error(error);
         return false;
       }
